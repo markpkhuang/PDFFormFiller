@@ -33,14 +33,19 @@ export default function PDFUploader() {
         const pages: PageMeta[] = [];
         for (let i = 1; i <= doc.numPages; i++) {
           const page = await doc.getPage(i);
-          // viewport at scale 1 returns dimensions in PDF points.
+          // viewport at rotation 0 returns the UNROTATED page dimensions in
+          // PDF points — this is the coordinate space we store overlays in.
           const vp = page.getViewport({ scale: 1, rotation: 0 });
+          // page.rotate is the PDF's intrinsic /Rotate value (0/90/180/270).
+          // Treat the stored `rotation` as the EFFECTIVE rotation (intrinsic
+          // + any user adjustments). Starting from intrinsic preserves the
+          // PDF's original orientation in both preview and export.
+          const intrinsic = ((page.rotate % 360) + 360) % 360 as 0 | 90 | 180 | 270;
           pages.push({
             originalIndex: i - 1,
             pdfWidth: vp.width,
             pdfHeight: vp.height,
-            // We start with rotation 0 — user rotation is layered on top.
-            rotation: 0,
+            rotation: intrinsic,
           });
         }
         await doc.destroy();

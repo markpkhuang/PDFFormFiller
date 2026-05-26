@@ -94,7 +94,9 @@ function Thumbnail({
       const page = await pdf.getPage(originalIndex + 1);
       const baseViewport = page.getViewport({ scale: 1, rotation: 0 });
       const scale = 140 / baseViewport.width;
-      const viewport = page.getViewport({ scale, rotation: (page.rotate + rotation) % 360 });
+      // `rotation` here is the effective rotation already (intrinsic + user),
+      // captured at upload time — pass it directly, do NOT add page.rotate.
+      const viewport = page.getViewport({ scale, rotation });
       if (cancelled) return;
       c.width = viewport.width;
       c.height = viewport.height;

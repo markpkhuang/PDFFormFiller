@@ -77,10 +77,13 @@ export default function PDFPageCanvas({
     (async () => {
       const page = await pdf.getPage(pageMeta.originalIndex + 1);
       const dpr = window.devicePixelRatio || 1;
-      // We pass rotation: 0 so the bitmap is the UNROTATED page; CSS
-      // transform on the wrapper applies the user's rotation visually.
-      // page.rotate is the PDF's intrinsic rotation, which we respect.
-      const viewport = page.getViewport({ scale: zoom * dpr, rotation: page.rotate });
+      // Always render the bitmap UNROTATED (rotation: 0). The page's
+      // effective rotation — which already includes the PDF's intrinsic
+      // /Rotate, captured at upload time — is applied as a CSS transform
+      // on the wrapping <div> below. This keeps overlay storage in
+      // unrotated PDF coordinates and makes the bitmap size match
+      // info.renderedWidth/Height exactly.
+      const viewport = page.getViewport({ scale: zoom * dpr, rotation: 0 });
       if (cancelled) return;
 
       canvas.width = viewport.width;
