@@ -139,6 +139,13 @@ export default function TextOverlayView({ overlay, info }: Props) {
             }}
             value={overlay.text}
             onChange={(e) => updateLive({ id: overlay.id, text: e.target.value })}
+            onKeyDown={(e) => {
+              // ESC exits edit mode (and onBlur will persist the text).
+              if (e.key === "Escape") {
+                e.stopPropagation();
+                textareaRef.current?.blur();
+              }
+            }}
             onBlur={() => {
               setEditing(false);
               // Persist the final text as a history-creating commit.

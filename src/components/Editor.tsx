@@ -44,6 +44,7 @@ export default function Editor() {
   const addOverlay = useEditorStore((s) => s.addOverlay);
   const loadDocument = useEditorStore((s) => s.loadDocument);
   const resetDocument = useEditorStore((s) => s.resetDocument);
+  const setSelected = useEditorStore((s) => s.setSelected);
 
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
   const [activeTool, setActiveTool] = useState<Tool>("select");
@@ -148,6 +149,27 @@ export default function Editor() {
   useHotkeys("v", () => setActiveTool("select"));
   useHotkeys("t", () => setActiveTool("text"));
   useHotkeys("s", () => setShowSignature(true));
+
+  // ESC behavior (in priority order):
+  //   1. If a placement tool (text/signature/image) is active, return to
+  //      Select. This is what users hit when they're "done placing".
+  //   2. Otherwise, if an overlay is selected, deselect it.
+  // The text-editing exit case (ESC while typing inside an overlay) is
+  // handled inside TextOverlayView so the textarea blurs and commits.
+  useHotkeys(
+    "escape",
+    (e) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (activeTool !== "select") {
+        setActiveTool("select");
+        return;
+      }
+      if (selectedId) setSelected(null);
+    },
+    { enableOnFormTags: false },
+    [activeTool, selectedId, setSelected],
+  );
 
   async function manualSaveDraft() {
     const s = useEditorStore.getState();
